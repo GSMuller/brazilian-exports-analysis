@@ -48,9 +48,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('kpi-products').textContent = 
             kpis.num_products.toLocaleString('pt-BR');
         
-        // Atualiza cards de transporte
+        // Atualiza cards de transporte mesmo se não houver dados
         if (kpis.transport_data && kpis.transport_data.length > 0) {
             updateTransportCards(kpis.transport_data);
+        } else {
+            // Se não houver dados, limpa os cards
+            for (let i = 1; i <= 3; i++) {
+                const card = document.getElementById(`transport-card-${i}`);
+                if (card) {
+                    const title = card.querySelector('.card-subtitle');
+                    const value = card.querySelector('.card-title');
+                    const percent = card.querySelector('.text-muted');
+                    
+                    if (title) title.textContent = '-';
+                    if (value) value.textContent = '$0';
+                    if (percent) percent.textContent = 'Sem dados';
+                }
+            }
         }
     }
     
@@ -67,13 +81,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 const percent = card.querySelector('.text-muted');
                 
                 if (sorted[i]) {
-                    title.textContent = sorted[i].via;
-                    value.textContent = formatCurrency(sorted[i].valor);
-                    percent.textContent = `${sorted[i].percentual}% do total`;
+                    if (title) title.textContent = sorted[i].via;
+                    if (value) value.textContent = formatCurrency(sorted[i].valor);
+                    if (percent) percent.textContent = `${sorted[i].percentual.toFixed(2)}% do total`;
                 } else {
-                    title.textContent = '-';
-                    value.textContent = '$0';
-                    percent.textContent = 'Sem dados';
+                    if (title) title.textContent = '-';
+                    if (value) value.textContent = '$0';
+                    if (percent) percent.textContent = 'Sem dados';
+                }
+            }
+        }
+    }
                 }
             }
         }
