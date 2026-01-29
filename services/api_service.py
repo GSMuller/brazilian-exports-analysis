@@ -70,7 +70,8 @@ class ComexStatAPI:
             'NO_VIA': 'via',
             'SG_UF_NCM': 'uf',
             'VL_FOB': 'valor_fob',
-            'KG_LIQUIDO': 'peso_kg'
+            'KG_LIQUIDO': 'peso_kg',
+            'QT_ESTAT': 'quantidade'
         }
         
         df = df.rename(columns=column_mapping)
@@ -86,7 +87,7 @@ class ComexStatAPI:
             df['descricao_ncm'] = df['ncm'].apply(lambda x: get_ncm_descricao(str(x)))
         
         # Converte tipos
-        numeric_cols = ['valor_fob', 'peso_kg']
+        numeric_cols = ['valor_fob', 'peso_kg', 'quantidade']
         for col in numeric_cols:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce')

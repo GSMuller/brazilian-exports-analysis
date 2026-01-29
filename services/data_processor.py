@@ -157,9 +157,13 @@ class DataProcessor:
         total_series = df.groupby('periodo').agg({
             'valor_fob': 'sum',
             'peso_kg': 'sum',
-            'quantidade': 'sum'
+            'quantidade': 'sum' if 'quantidade' in df.columns else lambda x: 0
         }).reset_index()
         total_series['periodo_str'] = total_series['periodo'].astype(str)
+        
+        # Garante que quantidade existe
+        if 'quantidade' not in total_series.columns:
+            total_series['quantidade'] = 0
         
         # Identifica top 5 NCMs por valor total
         top_ncms = df.groupby(['ncm', 'descricao_ncm'])['valor_fob'].sum().nlargest(5).reset_index()
@@ -170,19 +174,27 @@ class DataProcessor:
             ncm_code = ncm_row['ncm']
             ncm_desc = ncm_row['descricao_ncm']
             
-            ncm_data = df[df['ncm'] == ncm_code].groupby('periodo').agg({
+            ncm_df_filtered = df[df['ncm'] == ncm_code]
+            
+            agg_dict = {
                 'valor_fob': 'sum',
-                'peso_kg': 'sum',
-                'quantidade': 'sum'
-            }).reset_index()
+                'peso_kg': 'sum'
+            }
+            if 'quantidade' in ncm_df_filtered.columns:
+                agg_dict['quantidade'] = 'sum'
+            
+            ncm_data = ncm_df_filtered.groupby('periodo').agg(agg_dict).reset_index()
             
             ncm_data['periodo_str'] = ncm_data['periodo'].astype(str)
             ncm_data['ncm'] = ncm_code
             ncm_data['descricao_ncm'] = ncm_desc
             
             # Calcula preço médio implícito (FOB / quantidade)
-            ncm_data['preco_medio'] = ncm_data['valor_fob'] / ncm_data['quantidade']
-            ncm_data['preco_medio'] = ncm_data['preco_medio'].replace([float('inf'), float('-inf')], 0).fillna(0)
+            if 'quantidade' in ncm_data.columns and ncm_data['quantidade'].sum() > 0:
+                ncm_data['preco_medio'] = ncm_data['valor_fob'] / ncm_data['quantidade']
+                ncm_data['preco_medio'] = ncm_data['preco_medio'].replace([float('inf'), float('-inf')], 0).fillna(0)
+            else:
+                ncm_data['preco_medio'] = 0
             
             ncm_series_list.append(ncm_data)
         
@@ -199,11 +211,14 @@ class DataProcessor:
             top_paises_ncm = ncm_df.groupby('pais')['valor_fob'].sum().nlargest(5).index.tolist()
             
             # Séries temporais por país para este NCM
-            paises_ncm_data = ncm_df[ncm_df['pais'].isin(top_paises_ncm)].groupby(['periodo', 'pais']).agg({
+            agg_dict = {
                 'valor_fob': 'sum',
-                'peso_kg': 'sum',
-                'quantidade': 'sum'
-            }).reset_index()
+                'peso_kg': 'sum'
+            }
+            if 'quantidade' in ncm_df.columns:
+                agg_dict['quantidade'] = 'sum'
+            
+            paises_ncm_data = ncm_df[ncm_df['pais'].isin(top_paises_ncm)].groupby(['periodo', 'pais']).agg(agg_dict).reset_index()
             
             paises_ncm_data['periodo_str'] = paises_ncm_data['periodo'].astype(str)
             paises_ncm_data['ncm'] = ncm_code
