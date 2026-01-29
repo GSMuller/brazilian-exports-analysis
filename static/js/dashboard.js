@@ -14,22 +14,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const year = yearSelect.value;
         const month = monthSelect.value;
 
+        console.log('Carregando dados:', year, month);
         showLoading();
 
-        fetch(`/api/dashboard-data?year=${year}&month=${month}`)
+        fetch(`/api/dashboard-data?year=${year}&month=${month}&t=${Date.now()}`)
             .then(response => {
+                console.log('Resposta recebida:', response.status);
                 if (!response.ok) {
                     throw new Error('Erro ao carregar dados');
                 }
                 return response.json();
             })
             .then(data => {
+                console.log('Dados recebidos:', data);
                 updateKPIs(data.kpis);
                 renderCharts(data.charts);
                 hideLoading();
             })
             .catch(error => {
-                console.error('Erro:', error);
+                console.error('Erro ao carregar dados:', error);
                 hideLoading();
                 alert('Erro ao carregar dados. Por favor, tente novamente.');
             });
@@ -74,11 +77,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Garante que temos pelo menos 3 cards, preenche com "Sem dados"
         for (let i = 0; i < 3; i++) {
-            const card = document.getElementById(`transport-card-${i + 1}`);
-            if (card) {
-                const title = card.querySelector('.card-subtitle');
-                const value = card.querySelector('.card-title');
-                const percent = card.querySelector('.text-muted');
+            const cardContainer = document.getElementById(`transport-card-${i + 1}`);
+            if (cardContainer) {
+                const title = cardContainer.querySelector('.card-subtitle');
+                const value = cardContainer.querySelector('.card-title');
+                const percent = cardContainer.querySelector('p.text-muted');
                 
                 if (sorted[i]) {
                     if (title) title.textContent = sorted[i].via;
@@ -88,10 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (title) title.textContent = '-';
                     if (value) value.textContent = '$0';
                     if (percent) percent.textContent = 'Sem dados';
-                }
-            }
-        }
-    }
                 }
             }
         }
@@ -158,7 +157,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', function() {
         Plotly.Plots.resize('ncm-chart');
         Plotly.Plots.resize('country-chart');
-        Plotly.Plots.resize('transport-chart');
         Plotly.Plots.resize('state-chart');
     });
 });

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 from config import Config
+import pandas as pd
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -41,8 +42,22 @@ def get_dashboard_data():
         year = request.args.get('year', '2024')
         month = request.args.get('month', '12')
         
-        # Busca dados da API
-        raw_data = api_service.fetch_export_data(year, month)
+        # Define lista de anos e meses
+        years = ['2020', '2021', '2022', '2023', '2024'] if year == 'todos' else [year]
+        months = [f'{m:02d}' for m in range(1, 13)] if month == 'todos' else [month]
+        
+        # Carrega e agrega dados
+        if year == 'todos' or month == 'todos':
+            all_data = []
+            for y in years:
+                for m in months:
+                    df = api_service.fetch_export_data(y, m)
+                    if not df.empty:
+                        all_data.append(df)
+            raw_data = pd.concat(all_data, ignore_index=True) if all_data else pd.DataFrame()
+        else:
+            # Busca dados de um único ano/mês
+            raw_data = api_service.fetch_export_data(year, month)
         
         if raw_data.empty:
             return jsonify({'error': 'Nenhum dado encontrado'}), 404
