@@ -6,33 +6,6 @@ Dashboard de análise de exportações brasileiras usando dados públicos do Com
 
 Sistema web para visualização e análise de dados de exportação do Brasil. Permite análise por produto (NCM), país de destino, modal de transporte e estado de origem, utilizando dados reais do Ministério da Economia (2020-2024).
 
-## Capturas de Tela
-
-### Dashboard Principal
-Interface principal com visão geral das exportações brasileiras.
-
-![Dashboard Principal](images/dashboard-principal.png)
-
-### Análise por País
-Seleção de país específico com filtros por ano e mês.
-
-![Análise por País](images/analise-por-pais.png)
-
-### Visualização de Dados
-Gráfico de bolhas mostrando volume e valor das exportações por produto.
-
-![Gráfico de Bolhas](images/grafico-bolhas-pais.png)
-
-### Séries Temporais
-Análise de evolução temporal das exportações entre 2020 e 2024.
-
-![Séries Temporais](images/series-temporais.png)
-
-### Distribuição Geográfica
-Mapa interativo do Brasil com distribuição de exportações por estado.
-
-![Mapa Brasil](images/mapa-brasil.png)
-
 ## Funcionalidades
 
 - Dashboard interativo com gráficos dinâmicos
@@ -47,6 +20,23 @@ Mapa interativo do Brasil com distribuição de exportações por estado.
   - Séries temporais multi-anuais
 - API REST para integração
 - Dados reais: 5 anos (2020-2024), 475 MB de exportações
+
+## Capturas de Tela
+
+### Dashboard Principal
+![Dashboard Principal](images/dashboard-principal.png)
+
+### Análise por País
+![Análise por País](images/analise-por-pais.png)
+
+### Gráfico de Bolhas
+![Gráfico de Bolhas](images/grafico-bolhas-pais.png)
+
+### Séries Temporais
+![Séries Temporais](images/series-temporais.png)
+
+### Mapa do Brasil
+![Mapa Brasil](images/mapa-brasil.png)
 
 ## Tecnologias
 
