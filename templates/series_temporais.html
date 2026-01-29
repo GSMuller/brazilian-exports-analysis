@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Séries Temporais - Exportações Brasileiras</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
@@ -20,7 +21,12 @@
     </nav>
 
     <div class="container-fluid mt-4">
-        <h2 class="mb-4">Análise de Séries Temporais</h2>
+        <h2 class="mb-4">Análise de Séries Temporais - Desagregada por NCM</h2>
+        
+        <div class="alert alert-info">
+            <strong>Metodologia:</strong> Análise desagregada por produto (NCM). Cada commodity é analisada separadamente 
+            para evitar distorções na interpretação econômica. Preços médios indicam se é commodity bruta ou processada.
+        </div>
         
         <!-- Filtros -->
         <div class="row mb-4">
@@ -30,8 +36,8 @@
                         <h5 class="card-title">Filtros</h5>
                         <div class="row">
                             <div class="col-md-3">
-                                <label for="ano-inicio" class="form-label">Ano Inicial</label>
-                                <select id="ano-inicio" class="form-select">
+                                <label for="anoInicioSelect" class="form-label">Ano Inicial</label>
+                                <select id="anoInicioSelect" class="form-select">
                                     <option value="2020" selected>2020</option>
                                     <option value="2021">2021</option>
                                     <option value="2022">2022</option>
@@ -40,8 +46,8 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label for="ano-fim" class="form-label">Ano Final</label>
-                                <select id="ano-fim" class="form-select">
+                                <label for="anoFimSelect" class="form-label">Ano Final</label>
+                                <select id="anoFimSelect" class="form-select">
                                     <option value="2020">2020</option>
                                     <option value="2021">2021</option>
                                     <option value="2022">2022</option>
@@ -49,6 +55,24 @@
                                     <option value="2024" selected>2024</option>
                                 </select>
                             </div>
+                            <div class="col-md-3">
+                                <label for="agregacaoSelect" class="form-label">Agregação</label>
+                                <select id="agregacaoSelect" class="form-select">
+                                    <option value="mensal" selected>Mensal</option>
+                                    <option value="trimestral">Trimestral</option>
+                                    <option value="anual">Anual</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button id="aplicarFiltro" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter"></i> Aplicar Filtros
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
                             <div class="col-md-3">
                                 <label for="agregacao" class="form-label">Agregação</label>
                                 <select id="agregacao" class="form-select">
@@ -66,104 +90,62 @@
             </div>
         </div>
 
+        
         <!-- Loading -->
         <div id="loading" class="text-center my-5" style="display: none;">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Carregando...</span>
             </div>
-            <p class="mt-2">Processando dados...</p>
+            <p class="mt-2">Processando dados de todos os anos...</p>
         </div>
 
-        <!-- Gráficos -->
-        <div class="row">
-            <!-- Valor Total ao Longo do Tempo -->
-            <div class="col-md-12 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Evolução do Valor Total Exportado (US$ FOB)</h5>
-                        <div id="grafico-valor-total"></div>
+        <!-- Container de Gráficos -->
+        <div id="charts-container" style="display: none;">
+            <!-- Gráficos Agregados -->
+            <h3 class="mb-3">Visão Agregada (Todos os Produtos)</h3>
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Valor Total Exportado</h5>
+                            <div id="chart-valor-total"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Volume Total</h5>
+                            <div id="chart-volume"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Volume (Peso) ao Longo do Tempo -->
-            <div class="col-md-12 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Evolução do Volume Exportado (Kg)</h5>
-                        <div id="grafico-volume"></div>
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Top 5 Países (Todos os Produtos)</h5>
+                            <div id="chart-paises"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Top 5 Países ao Longo do Tempo -->
-            <div class="col-md-12 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Top 5 Países - Evolução Temporal</h5>
-                        <div id="grafico-paises-tempo"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Top 5 Produtos ao Longo do Tempo -->
-            <div class="col-md-12 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Top 5 Produtos - Evolução Temporal</h5>
-                        <div id="grafico-produtos-tempo"></div>
-                    </div>
-                </div>
-            </div>
+            
+            <!-- Análise Desagregada por NCM -->
+            <hr class="my-5">
+            <h3 class="mb-3">Análise Desagregada por Produto (NCM)</h3>
+            <p class="text-muted">Cada produto é analisado separadamente com suas principais destinações.</p>
+            
+            <div id="ncm-charts-container"></div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function formatarMoeda(valor) {
-            return new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'USD',
-                minimumFractionDigits: 0
-            }).format(valor);
-        }
-
-        function formatarNumero(valor) {
-            return new Intl.NumberFormat('pt-BR').format(valor);
-        }
-
-        function carregarDados() {
-            const anoInicio = document.getElementById('ano-inicio').value;
-            const anoFim = document.getElementById('ano-fim').value;
-            const agregacao = document.getElementById('agregacao').value;
-
-            document.getElementById('loading').style.display = 'block';
-
-            fetch(`/api/series-temporais?ano_inicio=${anoInicio}&ano_fim=${anoFim}&agregacao=${agregacao}`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('loading').style.display = 'none';
-                    
-                    // Gráfico de Valor Total
-                    Plotly.newPlot('grafico-valor-total', 
-                        JSON.parse(data.grafico_valor_total).data,
-                        JSON.parse(data.grafico_valor_total).layout,
-                        {responsive: true}
-                    );
-
-                    // Gráfico de Volume
-                    Plotly.newPlot('grafico-volume', 
-                        JSON.parse(data.grafico_volume).data,
-                        JSON.parse(data.grafico_volume).layout,
-                        {responsive: true}
-                    );
-
-                    // Gráfico de Países ao Longo do Tempo
-                    Plotly.newPlot('grafico-paises-tempo', 
-                        JSON.parse(data.grafico_paises_tempo).data,
-                        JSON.parse(data.grafico_paises_tempo).layout,
-                        {responsive: true}
-                    );
+    <script src="/static/js/series_temporais.js"></script>
+</body>
+</html>
 
                     // Gráfico de Produtos ao Longo do Tempo
                     Plotly.newPlot('grafico-produtos-tempo', 

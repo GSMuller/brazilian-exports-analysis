@@ -300,6 +300,7 @@ def get_series_temporais():
         ano_inicio = int(request.args.get('ano_inicio', '2020'))
         ano_fim = int(request.args.get('ano_fim', '2024'))
         agregacao = request.args.get('agregacao', 'mensal')
+        ncm_selecionado = request.args.get('ncm', None)  # Filtro opcional por NCM específico
         
         # Busca dados para todos os anos/meses
         import pandas as pd
@@ -317,32 +318,76 @@ def get_series_temporais():
         # Combina todos os dados
         combined_df = pd.concat(all_data, ignore_index=True)
         
-        # Processa séries temporais
+        # Filtra por NCM se especificado
+        if ncm_selecionado:
+            combined_df = combined_df[combined_df['ncm'] == ncm_selecionado]
+        
+        # Processa séries temporais com desagregação
         series_data = data_processor.process_time_series(combined_df, agregacao)
         
-        # Gera gráficos
-        charts = {
-            'grafico_valor_total': chart_gen.create_time_series_chart(
-                series_data['total'],
-                'Valor Total Exportado',
-                'Valor (US$ FOB)'
-            ),
-            'grafico_volume': chart_gen.create_time_series_chart(
-                series_data['volume'],
-                'Volume Exportado',
-                'Peso (Kg)'
-            ),
-            'grafico_paises_tempo': chart_gen.create_multi_line_chart(
-                series_data['top_paises'],
-                'Top 5 Países',
-                'Valor (US$ FOB)'
-            ),
-            'grafico_produtos_tempo': chart_gen.create_multi_line_chart(
-                series_data['top_produtos'],
-                'Top 5 Produtos',
-                'Valor (US$ FOB)'
-            )
-        }
+        # Se não há NCM específico, mostra análise geral + desagregação por top 5 NCMs
+        if not ncm_selecionado:
+            charts = {
+                'grafico_valor_total': chart_gen.create_time_series_chart(
+                    series_data['total'],
+                    'Valor Total Exportado (Agregado)',
+                    'Valor (US$ FOB)'
+                ),
+                'grafico_volume': chart_gen.create_time_series_chart(
+                    series_data['volume'],
+                    'Volume Total Exportado',
+                    'Peso (Kg)'
+                ),
+                'grafico_paises_tempo': chart_gen.create_multi_line_chart(
+                    series_data['top_paises'],
+                    'Top 5 Países (Todos os Produtos)',
+                    'Valor (US$ FOB)'
+                ),
+                'top_ncms': series_data.get('top_ncms_info', []),
+                'ncm_individual': {}  # Gráficos individuais por NCM
+            }
+            
+            # Adiciona gráficos individuais para cada top NCM
+            for i, ncm_data in enumerate(series_data.get('ncm_series', [])):
+                ncm_code = ncm_data['ncm'].iloc[0] if not ncm_data.empty else ''
+                ncm_desc = ncm_data['descricao_ncm'].iloc[0] if not ncm_data.empty else ''
+                
+                charts['ncm_individual'][f'ncm_{ncm_code}'] = {
+                    'info': {'ncm': ncm_code, 'descricao': ncm_desc},
+                    'grafico_valor': chart_gen.create_time_series_chart(
+                        ncm_data,
+                        f'{ncm_desc} (NCM {ncm_code})',
+                        'Valor (US$ FOB)'
+                    ),
+                    'grafico_preco_medio': chart_gen.create_time_series_chart(
+                        ncm_data[['periodo_str', 'preco_medio']].rename(columns={'preco_medio': 'valor_fob'}),
+                        f'Preço Médio - {ncm_desc}',
+                        'Preço (US$/unidade)'
+                    )
+                }
+                
+                # Adiciona gráfico de países para este NCM
+                if i < len(series_data.get('ncm_pais_series', [])):
+                    pais_ncm_data = series_data['ncm_pais_series'][i]
+                    charts['ncm_individual'][f'ncm_{ncm_code}']['grafico_paises'] = chart_gen.create_multi_line_chart(
+                        pais_ncm_data,
+                        f'Top 5 Países - {ncm_desc}',
+                        'Valor (US$ FOB)'
+                    )
+        else:
+            # Análise focada em um NCM específico
+            charts = {
+                'grafico_valor_total': chart_gen.create_time_series_chart(
+                    series_data['total'],
+                    f'Valor Exportado - NCM {ncm_selecionado}',
+                    'Valor (US$ FOB)'
+                ),
+                'grafico_paises_tempo': chart_gen.create_multi_line_chart(
+                    series_data['top_paises'],
+                    f'Top 5 Países - NCM {ncm_selecionado}',
+                    'Valor (US$ FOB)'
+                )
+            }
         
         return jsonify(charts)
         

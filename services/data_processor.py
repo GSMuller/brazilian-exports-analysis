@@ -125,17 +125,22 @@ class DataProcessor:
         return f"{value:.2f} kg"    
     def process_time_series(self, df: pd.DataFrame, agregacao: str = 'mensal') -> Dict:
         """
-        Processa dados para análise de séries temporais
+        Processa dados para análise de séries temporais com desagregação por NCM
         
         Args:
             df: DataFrame com dados de exportação (com colunas ano, mes)
             agregacao: 'mensal', 'trimestral' ou 'anual'
         
         Returns:
-            Dict com séries temporais processadas
+            Dict com séries temporais desagregadas por NCM e país
         """
         if df.empty:
             return {}
+        
+        # Garante descrição NCM
+        if 'descricao_ncm' not in df.columns:
+            from .codigos_comexstat import get_ncm_descricao
+            df['descricao_ncm'] = df['ncm'].apply(lambda x: get_ncm_descricao(str(x)))
         
         # Cria coluna de data
         df['data'] = pd.to_datetime(df['ano'].astype(str) + '-' + df['mes'].astype(str).str.zfill(2) + '-01')
@@ -148,42 +153,81 @@ class DataProcessor:
         else:  # mensal
             df['periodo'] = df['data'].dt.to_period('M')
         
-        # Série temporal total
+        # Série temporal total (agregado geral)
         total_series = df.groupby('periodo').agg({
             'valor_fob': 'sum',
-            'peso_kg': 'sum'
+            'peso_kg': 'sum',
+            'quantidade': 'sum'
         }).reset_index()
         total_series['periodo_str'] = total_series['periodo'].astype(str)
         
-        # Top 5 países ao longo do tempo
-        top_paises = df.groupby('pais')['valor_fob'].sum().nlargest(5).index.tolist()
-        paises_series = df[df['pais'].isin(top_paises)].groupby(['periodo', 'pais']).agg({
-            'valor_fob': 'sum'
+        # Identifica top 5 NCMs por valor total
+        top_ncms = df.groupby(['ncm', 'descricao_ncm'])['valor_fob'].sum().nlargest(5).reset_index()
+        
+        # Séries individuais por NCM (desagregadas)
+        ncm_series_list = []
+        for _, ncm_row in top_ncms.iterrows():
+            ncm_code = ncm_row['ncm']
+            ncm_desc = ncm_row['descricao_ncm']
+            
+            ncm_data = df[df['ncm'] == ncm_code].groupby('periodo').agg({
+                'valor_fob': 'sum',
+                'peso_kg': 'sum',
+                'quantidade': 'sum'
+            }).reset_index()
+            
+            ncm_data['periodo_str'] = ncm_data['periodo'].astype(str)
+            ncm_data['ncm'] = ncm_code
+            ncm_data['descricao_ncm'] = ncm_desc
+            
+            # Calcula preço médio implícito (FOB / quantidade)
+            ncm_data['preco_medio'] = ncm_data['valor_fob'] / ncm_data['quantidade']
+            ncm_data['preco_medio'] = ncm_data['preco_medio'].replace([float('inf'), float('-inf')], 0).fillna(0)
+            
+            ncm_series_list.append(ncm_data)
+        
+        # Top 5 países por NCM (desagregado)
+        ncm_pais_series_list = []
+        for _, ncm_row in top_ncms.iterrows():
+            ncm_code = ncm_row['ncm']
+            ncm_desc = ncm_row['descricao_ncm']
+            
+            # Filtra dados deste NCM
+            ncm_df = df[df['ncm'] == ncm_code]
+            
+            # Identifica top 5 países para este NCM
+            top_paises_ncm = ncm_df.groupby('pais')['valor_fob'].sum().nlargest(5).index.tolist()
+            
+            # Séries temporais por país para este NCM
+            paises_ncm_data = ncm_df[ncm_df['pais'].isin(top_paises_ncm)].groupby(['periodo', 'pais']).agg({
+                'valor_fob': 'sum',
+                'peso_kg': 'sum',
+                'quantidade': 'sum'
+            }).reset_index()
+            
+            paises_ncm_data['periodo_str'] = paises_ncm_data['periodo'].astype(str)
+            paises_ncm_data['ncm'] = ncm_code
+            paises_ncm_data['descricao_ncm'] = ncm_desc
+            
+            # Calcula share percentual de cada país no período
+            total_por_periodo = paises_ncm_data.groupby('periodo')['valor_fob'].transform('sum')
+            paises_ncm_data['share_pct'] = (paises_ncm_data['valor_fob'] / total_por_periodo * 100).round(2)
+            
+            ncm_pais_series_list.append(paises_ncm_data)
+        
+        # Agrupa top 5 países geral (todos os NCMs)
+        top_paises_geral = df.groupby('pais')['valor_fob'].sum().nlargest(5).index.tolist()
+        paises_series = df[df['pais'].isin(top_paises_geral)].groupby(['periodo', 'pais']).agg({
+            'valor_fob': 'sum',
+            'peso_kg': 'sum'
         }).reset_index()
         paises_series['periodo_str'] = paises_series['periodo'].astype(str)
-        
-        # Top 5 produtos ao longo do tempo
-        top_produtos_ncm = df.groupby('ncm')['valor_fob'].sum().nlargest(5).index.tolist()
-        produtos_df = df[df['ncm'].isin(top_produtos_ncm)].copy()
-        
-        # Adiciona descrição aos produtos
-        if 'descricao_ncm' in produtos_df.columns:
-            ncm_desc = produtos_df[['ncm', 'descricao_ncm']].drop_duplicates()
-            produtos_series = produtos_df.groupby(['periodo', 'ncm']).agg({
-                'valor_fob': 'sum'
-            }).reset_index()
-            produtos_series = produtos_series.merge(ncm_desc, on='ncm', how='left')
-        else:
-            produtos_series = produtos_df.groupby(['periodo', 'ncm']).agg({
-                'valor_fob': 'sum'
-            }).reset_index()
-            produtos_series['descricao_ncm'] = 'NCM ' + produtos_series['ncm'].astype(str)
-        
-        produtos_series['periodo_str'] = produtos_series['periodo'].astype(str)
         
         return {
             'total': total_series,
             'volume': total_series[['periodo_str', 'peso_kg']].copy(),
             'top_paises': paises_series,
-            'top_produtos': produtos_series
+            'ncm_series': ncm_series_list,  # Lista de séries individuais por NCM
+            'ncm_pais_series': ncm_pais_series_list,  # Lista de séries país x NCM
+            'top_ncms_info': top_ncms.to_dict('records')  # Info dos top NCMs
         }
