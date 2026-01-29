@@ -229,8 +229,17 @@ def get_analise_pais_data():
         if not pais:
             return jsonify({'error': 'País não especificado'}), 400
         
-        # Busca dados
-        raw_data = api_service.fetch_export_data(year, month)
+        # Busca dados - suporta ano inteiro
+        if month == 'todos':
+            all_data = []
+            for m in range(1, 13):
+                month_str = f'{m:02d}'
+                df = api_service.fetch_export_data(year, month_str)
+                if not df.empty:
+                    all_data.append(df)
+            raw_data = pd.concat(all_data, ignore_index=True) if all_data else pd.DataFrame()
+        else:
+            raw_data = api_service.fetch_export_data(year, month)
         
         # Filtra por país
         dados_pais = raw_data[raw_data['pais'] == pais]
@@ -240,7 +249,6 @@ def get_analise_pais_data():
         
         # Filtra por produto se especificado
         if filtro_produto:
-            # Busca em NCM e descrição
             mask = (
                 dados_pais['ncm'].astype(str).str.contains(filtro_produto, case=False, na=False) |
                 dados_pais['descricao_ncm'].str.contains(filtro_produto, case=False, na=False)
@@ -288,6 +296,39 @@ def get_analise_pais_data():
             f'Top 10 Produtos - {titulo_base}'
         )
         
+        # NOVO: Timeline mensal (se ano inteiro)
+        timeline_chart = None
+        if month == 'todos' and 'mes' in dados_pais.columns:
+            timeline_data = dados_pais.groupby('mes').agg({
+                'valor_fob': 'sum',
+                'peso_kg': 'sum'
+            }).reset_index()
+            timeline_data['mes_nome'] = timeline_data['mes'].apply(
+                lambda x: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+                          'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][int(x)-1]
+            )
+            timeline_chart = chart_gen.create_line_chart(
+                timeline_data,
+                'mes_nome',
+                'valor_fob',
+                f'Evolução Mensal - {titulo_base}'
+            )
+        
+        # NOVO: Pizza de modais de transporte
+        transport_chart = None
+        if 'via' in dados_pais.columns:
+            transport_data = dados_pais.groupby('via').agg({
+                'valor_fob': 'sum'
+            }).reset_index()
+            transport_data = transport_data.sort_values('valor_fob', ascending=False)
+            if not transport_data.empty:
+                transport_chart = chart_gen.create_pie_chart(
+                    transport_data,
+                    'via',
+                    'valor_fob',
+                    f'Modais de Transporte - {titulo_base}'
+                )
+        
         # KPIs
         total_fob = dados_pais['valor_fob'].sum()
         total_peso = dados_pais['peso_kg'].sum()
@@ -303,7 +344,9 @@ def get_analise_pais_data():
             },
             'charts': {
                 'bubble_chart': bubble_chart,
-                'bar_chart': bar_chart
+                'bar_chart': bar_chart,
+                'timeline_chart': timeline_chart,
+                'transport_chart': transport_chart
             }
         })
         

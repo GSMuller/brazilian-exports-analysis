@@ -8,35 +8,46 @@ Sistema web para visualização e análise de dados de exportação do Brasil. P
 
 ## Funcionalidades
 
-- Dashboard interativo com gráficos dinâmicos
-- Filtros por ano, mês, país e produto específico
-- KPIs principais (valor total, peso, países, produtos)
-- Visualizações por:
-  - Top produtos exportados (9.301 NCMs traduzidos)
-  - Principais destinos
-  - Modal de transporte
-  - Distribuição por estado (mapa do Brasil)
-  - Análise por país com gráfico de bolhas
-  - Séries temporais multi-anuais
-- API REST para integração
-- Dados reais: 5 anos (2020-2024), 475 MB de exportações
+- **Dashboard interativo** com gráficos dinâmicos e modo escuro/claro
+- **Filtros avançados** por ano, mês, país e produto específico
+- **KPIs principais**: valor total, peso, países, produtos e modais de transporte
+- **Visualizações corporativas**:
+  - Gráfico de pizza: Top 10 produtos exportados (9.301 NCMs traduzidos)
+  - Gráfico de barras horizontais: Principais destinos
+  - Distribuição por modal de transporte
+  - Mapa do Brasil: Exportações por estado
+  - Gráfico de bolhas: Análise de commodities por país (peso x preço x valor)
+  - Timeline: Evolução mensal de exportações
+  - Séries temporais multi-anuais comparativas
+- **Design corporativo** com paleta de cores profissional (navy, orange, gray)
+- **API REST** para integração
+- **Dados reais**: 5 anos (2020-2024), 475 MB de exportações
 
 ## Capturas de Tela
 
-### Dashboard Principal
-![Dashboard Principal](images/dashboard-principal.png)
+### Visão Geral - Dashboard Principal
+![Visão Geral](images/visao_geral.png)
+*Dashboard com KPIs, gráfico de pizza dos produtos e barras dos principais destinos*
 
-### Análise por País
-![Análise por País](images/analise-por-pais.png)
+### Mapa de Exportações por Estado
+![Mapa do Brasil](images/visao_mapa.png)
+*Visualização geográfica das exportações por estado brasileiro*
 
-### Gráfico de Bolhas
-![Gráfico de Bolhas](images/grafico-bolhas-pais.png)
+### Análise por País - Gráfico de Dispersão
+![Análise por País - Dispersão](images/dispersao.png)
+*Gráfico de bolhas mostrando commodities exportadas (peso x preço x valor de mercado)*
 
-### Séries Temporais
-![Séries Temporais](images/series-temporais.png)
+### Análise por País - Detalhamento
+![Análise Completa](images/exp_pais.png)
+*Visão completa com timeline mensal, modais de transporte e top produtos por país*
 
-### Mapa do Brasil
-![Mapa Brasil](images/mapa-brasil.png)
+### Séries Temporais - Visão 1
+![Séries Temporais 1](images/series_temporais_1.png)
+*Análise comparativa multi-anual por produtos*
+
+### Séries Temporais - Visão 2
+![Séries Temporais 2](images/series_temporais_2.png)
+*Análise por países e modais de transporte ao longo do tempo*
 
 ## Tecnologias
 

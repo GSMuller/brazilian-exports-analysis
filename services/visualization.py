@@ -9,8 +9,10 @@ class ChartGenerator:
     def __init__(self):
         self.default_layout = {
             'template': 'plotly_white',
-            'font': {'family': 'Arial, sans-serif', 'size': 12},
-            'margin': {'l': 50, 'r': 50, 't': 50, 'b': 50}
+            'font': {'family': 'JetBrains Mono, monospace', 'size': 12},
+            'margin': {'l': 50, 'r': 50, 't': 50, 'b': 50},
+            'plot_bgcolor': 'rgba(0,0,0,0)',
+            'paper_bgcolor': 'rgba(0,0,0,0)'
         }
     
     def create_treemap(self, df: pd.DataFrame, labels_col: str, values_col: str, title: str) -> Dict:
@@ -51,14 +53,55 @@ class ChartGenerator:
         df = df.copy()
         df['formatted_value'] = df[y_col].apply(lambda x: f"${x:,.2f}")
         
+        # Encurta nomes dos produtos
+        def shorten_name(name):
+            replacements = {
+                'Café não torrado, não descafeinado': 'Café',
+                'Outros açúcares de cana': 'Açúcar',
+                'Petróleo bruto': 'Petróleo',
+                'Minério de ferro': 'Minério Fe',
+                'Milho, exceto para semeadura': 'Milho',
+                'Sementes de soja': 'Soja',
+                'Pasta química de madeira': 'Celulose',
+                'Carne bovina desossada, congelada': 'Carne bovina',
+                'Algodão, não cardado nem penteado': 'Algodão',
+                'Tabaco parcialmente destalado': 'Tabaco',
+                'Ferronióbio': 'Ferronióbio',
+                'Tortas e outros resíduos sólidos da extração do óleo de soja': 'Farelo soja',
+                'Pedaços e miudezas comestíveis de galos e galinhas da espécie doméstica, congelados': 'Frango (pedaços)',
+                'para dissolução': '(dissolução)',
+                'Minério de ferro e seus concentrados': 'Minério Fe',
+                'não aglomerados': ''
+            }
+            
+            short = name
+            for long, replace in replacements.items():
+                if long.lower() in short.lower():
+                    short = short.replace(long, replace)
+            
+            # Remove textos extras comuns
+            short = short.replace(', não aglomerados', '')
+            short = short.replace(', exceto para semeadura', '')
+            short = short.strip(', ')
+            
+            if len(short) > 45:
+                return short[:42] + '...'
+            return short
+        
+        df['short_label'] = df[x_col].apply(shorten_name)
+        
         if horizontal:
             fig = go.Figure(go.Bar(
-                y=df[x_col],
+                y=df['short_label'],
                 x=df[y_col],
                 orientation='h',
                 text=df['formatted_value'],
                 textposition='outside',
-                marker_color='#1f77b4'
+                marker=dict(
+                    color='#0056A3',
+                    line=dict(color='#003B5C', width=1)
+                ),
+                hovertemplate='<b>%{y}</b><br>Valor: %{text}<extra></extra>'
             ))
             fig.update_layout(
                 yaxis={'categoryorder': 'total ascending'},
@@ -87,21 +130,85 @@ class ChartGenerator:
     
     def create_pie_chart(self, df: pd.DataFrame, labels_col: str, 
                         values_col: str, title: str) -> Dict:
-        """Cria gráfico de pizza"""
+        """Cria gráfico de pizza com nomes encurtados"""
         if df.empty:
             return self._empty_chart(title)
         
+        df = df.copy()
+        
+        # Função para encurtar nomes longos
+        def shorten_name(name):
+            # Remover detalhes desnecessários - mais agressivo
+            replacements = {
+                'Café não torrado, não descafeinado': 'Café',
+                'Outros açúcares de cana': 'Açúcar de cana',
+                'Petróleo bruto': 'Petróleo',
+                'Minério de ferro': 'Minério Fe',
+                'Milho, exceto para semeadura': 'Milho',
+                'Sementes de soja': 'Soja',
+                'Pasta química de madeira': 'Celulose',
+                'Carne bovina desossada, congelada': 'Carne bovina',
+                'Algodão, não cardado nem penteado': 'Algodão',
+                'Tortas e outros resíduos sólidos da extração do óleo de soja': 'Farelo soja',
+                'Tabaco parcialmente destalado': 'Tabaco',
+                'Ferronióbio': 'Ferronióbio'
+            }
+            
+            short = name
+            for long, replace in replacements.items():
+                if long.lower() in short.lower():
+                    short = replace
+                    break
+            
+            # Limpa textos extras comuns
+            short = short.replace(', não aglomerados', '')
+            short = short.replace(', exceto para semeadura', '')
+            short = short.replace('Pedaços e miudezas comestíveis de galos e galinhas da espécie doméstica, congelados', 'Frango')
+            short = short.replace('para dissolução', '')
+            short = short.strip(', ')
+            
+            # Limite mais agressivo
+            if len(short) > 25:
+                return short[:22] + '...'
+            return short
+        
+        df['short_labels'] = df[labels_col].apply(shorten_name)
+        
+        # Paleta de cores corporativa
+        colors = ['#003B5C', '#0056A3', '#0068A7', '#0077C0', '#0086D9', 
+                  '#FF8C00', '#FF9519', '#FFA74B', '#FFB064', '#8B95A5']
+        
         fig = go.Figure(go.Pie(
-            labels=df[labels_col],
+            labels=df['short_labels'],
             values=df[values_col],
-            hole=0.3,
-            textinfo='label+percent',
-            textposition='outside'
+            hole=0.4,
+            textinfo='percent',
+            textposition='inside',
+            textfont=dict(size=12, color='white', family='JetBrains Mono', weight='bold'),
+            marker=dict(
+                colors=colors,
+                line=dict(color='white', width=2)
+            ),
+            hovertemplate='<b>%{label}</b><br>Valor: $%{value:,.0f}<br>%{percent}<extra></extra>',
+            showlegend=True
         ))
         
         fig.update_layout(
-            title=title,
-            **self.default_layout
+            title=dict(
+                text=title,
+                font=dict(size=16, family='JetBrains Mono')
+            ),
+            font=dict(family='JetBrains Mono', size=11),
+            legend=dict(
+                orientation='v',
+                yanchor='middle',
+                y=0.5,
+                xanchor='left',
+                x=1.02,
+                font=dict(size=10)
+            ),
+            margin={'l': 20, 'r': 150, 't': 60, 'b': 20},
+            height=550
         )
         
         return fig.to_json()
@@ -120,14 +227,23 @@ class ChartGenerator:
                 x=df[x_col],
                 y=df[y_col],
                 mode='lines+markers',
-                line={'color': '#1f77b4'}
+                line=dict(color='#0056A3', width=3),
+                marker=dict(size=8, color='#FF8C00'),
+                fill='tozeroy',
+                fillcolor='rgba(0, 86, 163, 0.1)'
             ))
         
         fig.update_layout(
-            title=title,
+            title=dict(
+                text=title,
+                font=dict(size=16, family='JetBrains Mono')
+            ),
             xaxis_title=x_col,
             yaxis_title=y_col,
-            **self.default_layout
+            font=dict(family='JetBrains Mono', size=12),
+            hovermode='x unified',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
         )
         
         return fig.to_json()
@@ -225,39 +341,128 @@ class ChartGenerator:
     
     def create_bubble_chart(self, df: pd.DataFrame, x_col: str, y_col: str, 
                            size_col: str, text_col: str, title: str) -> Dict:
-        """Cria gráfico de dispersão de bolhas"""
+        """Cria gráfico de dispersão de bolhas melhorado com escala logarítmica"""
         if df.empty:
             return self._empty_chart(title)
         
+        df = df.copy()
+        
+        # Função para encurtar nomes
+        def shorten_name(name):
+            replacements = {
+                'Café não torrado, não descafeinado': 'Café',
+                'Outros açúcares de cana': 'Açúcar',
+                'Petróleo bruto': 'Petróleo',
+                'Minério de ferro': 'Minério Fe',
+                'Milho, exceto para semeadura': 'Milho',
+                'Sementes de soja': 'Soja',
+                'Pasta química de madeira': 'Celulose',
+                'Carne bovina desossada, congelada': 'Carne bovina',
+                'Algodão, não cardado nem penteado': 'Algodão',
+                'Tabaco parcialmente destalado': 'Tabaco',
+                'Ferronióbio': 'Ferronióbio',
+                'Tortas e outros resíduos sólidos da extração do óleo de soja': 'Farelo soja'
+            }
+            
+            for long, short in replacements.items():
+                if long.lower() in name.lower():
+                    return short
+            
+            if len(name) > 30:
+                return name[:27] + '...'
+            return name
+        
+        df['short_name'] = df[text_col].apply(shorten_name)
+        
+        # DEBUG: Print dos valores para verificar
+        import numpy as np
+        print("\n=== DEBUG BUBBLE CHART ===")
+        print(f"Coluna de tamanho: {size_col}")
+        print(f"Valores originais:\n{df[[text_col, size_col]].head(10)}")
+        print(f"Min: {df[size_col].min():,.0f}, Max: {df[size_col].max():,.0f}")
+        
+        # NORMALIZAÇÃO LINEAR DIRETA - mais agressiva
+        min_size = 8
+        max_size = 100
+        values = df[size_col].values
+        
+        # Proteção contra divisão por zero
+        if values.max() == values.min():
+            df['bubble_size'] = 30  # tamanho fixo se todos iguais
+            print("AVISO: Todos valores são iguais!")
+        else:
+            # Normalização LINEAR pura (mais agressiva que raiz quadrada)
+            normalized = (values - values.min()) / (values.max() - values.min())
+            df['bubble_size'] = normalized * (max_size - min_size) + min_size
+            print(f"Tamanhos calculados:\n{df[['short_name', 'bubble_size']].head(10)}")
+        
+        # Paleta de cores corporativa
+        colors = ['#003B5C', '#0056A3', '#0068A7', '#0077C0', '#0086D9', 
+                  '#FF8C00', '#FF9519', '#FFA74B', '#FFB064', '#8B95A5',
+                  '#0095D9', '#FFC04B', '#7A8896', '#60B8FF', '#FFD54F']
+        
+        df['color'] = [colors[i % len(colors)] for i in range(len(df))]
+        
         fig = go.Figure()
         
-        fig.add_trace(go.Scatter(
-            x=df[x_col],
-            y=df[y_col],
-            mode='markers',
-            marker=dict(
-                size=df[size_col],
-                sizemode='area',
-                sizeref=2.*max(df[size_col])/(40.**2),
-                sizemin=4,
-                color=df[size_col],
-                colorscale='Viridis',
-                showscale=True,
-                colorbar=dict(title="Valor FOB"),
-                line=dict(width=0.5, color='white')
-            ),
-            text=df[text_col],
-            hovertemplate='<b>%{text}</b><br>' +
-                         'Peso: %{x:,.0f} kg<br>' +
-                         'Preço: US$ %{y:,.2f}/kg<br>' +
-                         '<extra></extra>'
-        ))
+        # Adiciona cada produto como trace separado
+        for idx, row in df.iterrows():
+            # DEBUG: confirma o tamanho usado
+            bubble_size_final = float(row['bubble_size']) if not pd.isna(row['bubble_size']) else 30
+            
+            fig.add_trace(go.Scatter(
+                x=[row[x_col]],
+                y=[row[y_col]],
+                mode='markers',
+                marker=dict(
+                    size=bubble_size_final,
+                    color=row['color'],
+                    line=dict(width=2, color='white'),
+                    opacity=0.85
+                ),
+                name=row['short_name'],
+                hovertemplate=(
+                    f"<b>{row['short_name']}</b><br>" +
+                    f"Peso: {row[x_col]:,.0f} kg<br>" +
+                    f"Preço: US$ {row[y_col]:,.2f}/kg<br>" +
+                    f"Valor: ${row[size_col]:,.0f}<br>" +
+                    f"Tamanho bolha: {bubble_size_final:.1f}px<br>" +
+                    "<extra></extra>"
+                ),
+                showlegend=True
+            ))
         
         fig.update_layout(
-            title=title,
-            xaxis_title='Peso (kg)',
-            yaxis_title='Preço Médio (USD/kg)',
-            **self.default_layout
+            title=dict(
+                text=title,
+                font=dict(size=16, family='JetBrains Mono')
+            ),
+            xaxis=dict(
+                title='Peso (kg)',
+                type='log',  # Escala logarítmica para melhor distribuição
+                gridcolor='#E8EEF2',
+                showgrid=True
+            ),
+            yaxis=dict(
+                title='Preço Médio (USD/kg)',
+                type='log',  # Escala logarítmica
+                gridcolor='#E8EEF2',
+                showgrid=True
+            ),
+            font=dict(family='JetBrains Mono', size=12),
+            legend=dict(
+                orientation='v',
+                yanchor='top',
+                y=1,
+                xanchor='left',
+                x=1.05,
+                font=dict(size=10)
+            ),
+            hovermode='closest',
+            margin={'l': 80, 'r': 200, 't': 60, 'b': 80},
+            height=600,
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
         )
         
         return fig.to_json()

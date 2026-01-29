@@ -6,6 +6,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('agregacaoSelect').addEventListener('change', loadSeriesData);
     document.getElementById('aplicarFiltro').addEventListener('click', loadSeriesData);
     
+    // Event listener para mudanças de tema
+    window.addEventListener('themeChanged', () => {
+        loadSeriesData();
+    });
+    
     // Carrega dados iniciais
     loadSeriesData();
 });
@@ -47,27 +52,33 @@ function renderCharts(data) {
     
     // Gráfico de valor total agregado
     if (data.grafico_valor_total) {
+        const valorTotalData = JSON.parse(data.grafico_valor_total);
+        applyThemeToChart(valorTotalData, 'blueGradient');
         Plotly.newPlot('chart-valor-total', 
-            JSON.parse(data.grafico_valor_total).data,
-            JSON.parse(data.grafico_valor_total).layout,
+            valorTotalData.data,
+            valorTotalData.layout,
             {responsive: true}
         );
     }
     
     // Gráfico de volume
     if (data.grafico_volume) {
+        const volumeData = JSON.parse(data.grafico_volume);
+        applyThemeToChart(volumeData, 'orangeGradient');
         Plotly.newPlot('chart-volume', 
-            JSON.parse(data.grafico_volume).data,
-            JSON.parse(data.grafico_volume).layout,
+            volumeData.data,
+            volumeData.layout,
             {responsive: true}
         );
     }
     
     // Gráfico de países
     if (data.grafico_paises_tempo) {
+        const paisesData = JSON.parse(data.grafico_paises_tempo);
+        applyThemeToChart(paisesData, 'blueGradient');
         Plotly.newPlot('chart-paises', 
-            JSON.parse(data.grafico_paises_tempo).data,
-            JSON.parse(data.grafico_paises_tempo).layout,
+            paisesData.data,
+            paisesData.layout,
             {responsive: true}
         );
     }

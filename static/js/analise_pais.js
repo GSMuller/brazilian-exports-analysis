@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Carrega lista de países
     loadPaises();
+    
+    // Event listener para mudanças de tema
+    window.addEventListener('themeChanged', () => {
+        updateChartsTheme();
+    });
 
     // Event listeners
     console.log('Registrando event listeners...');
@@ -152,6 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderCharts(charts) {
         if (charts.bubble_chart) {
             const bubbleData = JSON.parse(charts.bubble_chart);
+            applyThemeToChart(bubbleData, 'blueGradient');
             Plotly.newPlot('bubble-chart', bubbleData.data, bubbleData.layout, {
                 responsive: true,
                 displayModeBar: true
@@ -160,11 +166,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (charts.bar_chart) {
             const barData = JSON.parse(charts.bar_chart);
+            applyThemeToChart(barData, 'orangeGradient');
             Plotly.newPlot('bar-chart', barData.data, barData.layout, {
                 responsive: true,
                 displayModeBar: false
             });
         }
+
+        // Novo: Timeline mensal
+        if (charts.timeline_chart) {
+            document.getElementById('timeline-row').style.display = 'block';
+            const timelineData = JSON.parse(charts.timeline_chart);
+            applyThemeToChart(timelineData, 'blueGradient');
+            Plotly.newPlot('timeline-chart', timelineData.data, timelineData.layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+        } else {
+            document.getElementById('timeline-row').style.display = 'none';
+        }
+
+        // Novo: Pizza de transporte
+        if (charts.transport_chart) {
+            const transportData = JSON.parse(charts.transport_chart);
+            applyThemeToChart(transportData, 'orangeGradient');
+            Plotly.newPlot('transport-chart', transportData.data, transportData.layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+    }
+    
+    function updateChartsTheme() {
+        updatePlotlyChart('bubble-chart');
+        updatePlotlyChart('bar-chart');
+        updatePlotlyChart('timeline-chart');
+        updatePlotlyChart('transport-chart');
     }
 
     function formatCurrency(value) {

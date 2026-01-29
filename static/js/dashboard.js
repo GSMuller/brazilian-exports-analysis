@@ -1,3 +1,4 @@
+// ==================== MAIN ====================
 document.addEventListener('DOMContentLoaded', function() {
     const yearSelect = document.getElementById('year-select');
     const monthSelect = document.getElementById('month-select');
@@ -9,6 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listener para aplicar filtros
     applyButton.addEventListener('click', loadDashboardData);
+    
+    // Event listener para mudanças de tema
+    window.addEventListener('themeChanged', () => {
+        updateChartsTheme();
+    });
 
     function loadDashboardData() {
         const year = yearSelect.value;
@@ -100,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Renderiza gráfico de NCM
         if (charts.ncm_chart) {
             const ncmData = JSON.parse(charts.ncm_chart);
+            applyThemeToChart(ncmData, 'blueGradient');
             Plotly.newPlot('ncm-chart', ncmData.data, ncmData.layout, {
                 responsive: true,
                 displayModeBar: false
@@ -109,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Renderiza gráfico de países
         if (charts.country_chart) {
             const countryData = JSON.parse(charts.country_chart);
+            applyThemeToChart(countryData, 'orangeGradient');
             Plotly.newPlot('country-chart', countryData.data, countryData.layout, {
                 responsive: true,
                 displayModeBar: false
@@ -118,11 +126,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Renderiza gráfico de estados (mapa do Brasil)
         if (charts.state_chart) {
             const stateData = JSON.parse(charts.state_chart);
+            applyThemeToChart(stateData, 'blueGradient', true);
             Plotly.newPlot('state-chart', stateData.data, stateData.layout, {
                 responsive: true,
                 displayModeBar: false
             });
         }
+    }
+
+    function updateChartsTheme() {
+        // Atualiza tema de todos os gráficos existentes
+        updatePlotlyChart('ncm-chart');
+        updatePlotlyChart('country-chart');
+        updatePlotlyChart('state-chart');
     }
 
     function formatCurrency(value) {

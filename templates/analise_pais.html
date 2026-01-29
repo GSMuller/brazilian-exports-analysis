@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,13 +9,23 @@
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark">
+    <nav class="navbar navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">Análise de Exportações por País</span>
-            <div>
-                <a href="/" class="btn btn-outline-light btn-sm me-2">Visão Geral</a>
-                <a href="/analise-pais" class="btn btn-light btn-sm me-2">Análise por País</a>
-                <a href="/series-temporais" class="btn btn-outline-light btn-sm">Séries Temporais</a>
+            <div class="d-flex align-items-center gap-3">
+                <div>
+                    <a href="/" class="btn btn-outline-light btn-sm me-2">Visão Geral</a>
+                    <a href="/analise-pais" class="btn btn-light btn-sm me-2">Análise por País</a>
+                    <a href="/series-temporais" class="btn btn-outline-light btn-sm">Séries Temporais</a>
+                </div>
+                <div class="theme-toggle-container">
+                    <span class="theme-label">Light</span>
+                    <label class="theme-toggle">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="theme-toggle-slider"></span>
+                    </label>
+                    <span class="theme-label">Dark</span>
+                </div>
             </div>
         </div>
     </nav>
@@ -41,6 +51,7 @@
                             <div class="col-md-2">
                                 <label for="month-select" class="form-label">Mês</label>
                                 <select id="month-select" class="form-select">
+                                    <option value="todos">Ano Inteiro (Jan-Dez)</option>
                                     <option value="01">Janeiro</option>
                                     <option value="02">Fevereiro</option>
                                     <option value="03">Março</option>
@@ -125,17 +136,34 @@
                             e a vertical o preço médio (USD/kg). 
                             Produtos no topo são de alto valor agregado.
                         </div>
-                        <div id="bubble-chart" style="height: 500px;"></div>
+                        <div id="bubble-chart" style="height: 600px;"></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div id="bar-chart" style="height: 450px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div id="transport-chart" style="height: 450px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4" id="timeline-row" style="display: none;">
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
-                        <div id="bar-chart" style="height: 400px;"></div>
+                        <div id="timeline-chart" style="height: 400px;"></div>
                     </div>
                 </div>
             </div>
@@ -158,6 +186,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <script src="{{ url_for('static', filename='js/analise_pais.js') }}"></script>
 </body>
 </html>
