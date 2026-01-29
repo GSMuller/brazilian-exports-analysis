@@ -50,7 +50,6 @@ def get_dashboard_data():
         # Processa dados
         processed = data_processor.aggregate_by_ncm(raw_data)
         by_country = data_processor.aggregate_by_country(raw_data)
-        by_transport = data_processor.aggregate_by_transport(raw_data)
         by_state = data_processor.aggregate_by_state(raw_data)
         
         # Gera visualizações
@@ -67,12 +66,6 @@ def get_dashboard_data():
                 'valor_fob',
                 'Principais Destinos'
             ),
-            'transport_chart': chart_gen.create_pie_chart(
-                by_transport,
-                'via',
-                'valor_fob',
-                'Distribuicao por Modal de Transporte'
-            ),
             'state_chart': chart_gen.create_brazil_map(
                 by_state,
                 'Exportações por Estado'
@@ -85,12 +78,25 @@ def get_dashboard_data():
         num_countries = raw_data['pais'].nunique() if 'pais' in raw_data.columns else 0
         num_products = raw_data['ncm'].nunique() if 'ncm' in raw_data.columns else 0
         
+        # Dados de transporte para cards
+        transport_agg = data_processor.aggregate_by_transport(raw_data)
+        transport_data = []
+        if not transport_agg.empty:
+            total_transport = transport_agg['valor_fob'].sum()
+            for _, row in transport_agg.head(3).iterrows():
+                transport_data.append({
+                    'via': row['via'],
+                    'valor': float(row['valor_fob']),
+                    'percentual': round(float(row['valor_fob'] / total_transport * 100), 2)
+                })
+        
         return jsonify({
             'kpis': {
                 'total_fob': float(total_fob),
                 'total_weight_kg': float(total_weight),
                 'num_countries': int(num_countries),
-                'num_products': int(num_products)
+                'num_products': int(num_products),
+                'transport_data': transport_data
             },
             'charts': charts
         })

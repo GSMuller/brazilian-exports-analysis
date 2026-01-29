@@ -47,6 +47,36 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.getElementById('kpi-products').textContent = 
             kpis.num_products.toLocaleString('pt-BR');
+        
+        // Atualiza cards de transporte
+        if (kpis.transport_data && kpis.transport_data.length > 0) {
+            updateTransportCards(kpis.transport_data);
+        }
+    }
+    
+    function updateTransportCards(transportData) {
+        // Ordena por valor e pega top 3
+        const sorted = transportData.sort((a, b) => b.valor - a.valor).slice(0, 3);
+        
+        // Garante que temos pelo menos 3 cards, preenche com "Sem dados"
+        for (let i = 0; i < 3; i++) {
+            const card = document.getElementById(`transport-card-${i + 1}`);
+            if (card) {
+                const title = card.querySelector('.card-subtitle');
+                const value = card.querySelector('.card-title');
+                const percent = card.querySelector('.text-muted');
+                
+                if (sorted[i]) {
+                    title.textContent = sorted[i].via;
+                    value.textContent = formatCurrency(sorted[i].valor);
+                    percent.textContent = `${sorted[i].percentual}% do total`;
+                } else {
+                    title.textContent = '-';
+                    value.textContent = '$0';
+                    percent.textContent = 'Sem dados';
+                }
+            }
+        }
     }
 
     function renderCharts(charts) {
@@ -68,16 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Renderiza gráfico de transporte
-        if (charts.transport_chart) {
-            const transportData = JSON.parse(charts.transport_chart);
-            Plotly.newPlot('transport-chart', transportData.data, transportData.layout, {
-                responsive: true,
-                displayModeBar: false
-            });
-        }
-
-        // Renderiza gráfico de estados
+        // Renderiza gráfico de estados (mapa do Brasil)
         if (charts.state_chart) {
             const stateData = JSON.parse(charts.state_chart);
             Plotly.newPlot('state-chart', stateData.data, stateData.layout, {
