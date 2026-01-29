@@ -349,8 +349,11 @@ def get_series_temporais():
             
             # Adiciona gráficos individuais para cada top NCM
             for i, ncm_data in enumerate(series_data.get('ncm_series', [])):
-                ncm_code = ncm_data['ncm'].iloc[0] if not ncm_data.empty else ''
-                ncm_desc = ncm_data['descricao_ncm'].iloc[0] if not ncm_data.empty else ''
+                if ncm_data.empty:
+                    continue
+                    
+                ncm_code = str(ncm_data['ncm'].iloc[0])
+                ncm_desc = str(ncm_data['descricao_ncm'].iloc[0])
                 
                 charts['ncm_individual'][f'ncm_{ncm_code}'] = {
                     'info': {'ncm': ncm_code, 'descricao': ncm_desc},

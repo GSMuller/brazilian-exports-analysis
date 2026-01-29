@@ -238,11 +238,40 @@ class DataProcessor:
         }).reset_index()
         paises_series['periodo_str'] = paises_series['periodo'].astype(str)
         
+        # Converte tipos numpy para Python nativos para serialização JSON
+        def convert_to_native_types(df_list):
+            result = []
+            for item in df_list:
+                if isinstance(item, pd.DataFrame):
+                    # Converte int64, float64 para int, float
+                    for col in item.select_dtypes(include=['int64', 'int32']).columns:
+                        item[col] = item[col].astype(int)
+                    for col in item.select_dtypes(include=['float64', 'float32']).columns:
+                        item[col] = item[col].astype(float)
+                result.append(item)
+            return result
+        
+        ncm_series_list = convert_to_native_types(ncm_series_list)
+        ncm_pais_series_list = convert_to_native_types(ncm_pais_series_list)
+        
+        # Converte top_ncms para tipos nativos
+        top_ncms_native = []
+        for record in top_ncms.to_dict('records'):
+            native_record = {}
+            for key, value in record.items():
+                if pd.api.types.is_integer(value):
+                    native_record[key] = int(value)
+                elif pd.api.types.is_float(value):
+                    native_record[key] = float(value)
+                else:
+                    native_record[key] = str(value)
+            top_ncms_native.append(native_record)
+        
         return {
             'total': total_series,
             'volume': total_series[['periodo_str', 'peso_kg']].copy(),
             'top_paises': paises_series,
             'ncm_series': ncm_series_list,  # Lista de séries individuais por NCM
             'ncm_pais_series': ncm_pais_series_list,  # Lista de séries país x NCM
-            'top_ncms_info': top_ncms.to_dict('records')  # Info dos top NCMs
+            'top_ncms_info': top_ncms_native  # Info dos top NCMs (tipos nativos)
         }
