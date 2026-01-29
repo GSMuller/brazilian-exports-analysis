@@ -1,0 +1,91 @@
+# Guia de Instalação e Execução
+
+## Passo 1: Preparar o ambiente
+
+Abra o Anaconda Prompt (procure no menu iniciar por "Anaconda Prompt") e navegue até o diretório do projeto:
+
+```bash
+cd c:\Users\giovanni.5683\Desktop\BRAEXP\brazilian-exports-analysis
+```
+
+## Passo 2: Criar ambiente virtual com Conda
+
+```bash
+conda create -n braexp python=3.11 -y
+```
+
+## Passo 3: Ativar ambiente virtual
+
+```bash
+conda activate braexp
+```
+
+## Passo 4: Instalar dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+## Passo 5: Configurar variáveis de ambiente
+
+```bash
+copy .env.example .env
+```
+
+O arquivo .env já está configurado com valores padrão para desenvolvimento local.
+
+## Passo 6: Executar a aplicação
+
+```bash
+python app.py
+```
+
+## Passo 7: Acessar o dashboard
+
+Abra seu navegador e acesse:
+
+```
+http://localhost:5000
+```
+
+## Solução de Problemas
+
+### Erro ao instalar dependências
+
+Se encontrar erro ao instalar psycopg2-binary, você pode comentar essa linha no requirements.txt se não for usar PostgreSQL.
+
+### Porta 5000 já em uso
+
+Edite o app.py e mude a porta:
+
+```python
+app.run(debug=True, host='0.0.0.0', port=8080)
+```
+
+### Erro de importação
+
+Certifique-se de que o ambiente virtual está ativado. Você deve ver (venv) no início da linha do terminal.
+
+## Próximos Passos
+
+1. O sistema está usando dados de exemplo gerados automaticamente
+2. Para usar dados reais do ComexStat, você pode baixar os arquivos CSV do site oficial e adaptar o api_service.py
+3. Para persistir dados históricos, configure o PostgreSQL
+
+## Estrutura dos Dados
+
+O sistema trabalha com os seguintes campos principais:
+- NCM: Código do produto
+- Valor FOB: Valor em dólares
+- País: País de destino
+- Via: Modal de transporte
+- UF: Estado de origem
+- Peso: Peso em kg
+
+## Customização
+
+Para customizar o dashboard:
+- CSS: edite static/css/style.css
+- JavaScript: edite static/js/dashboard.js
+- HTML: edite templates/index.html
+- Lógica de negócio: edite services/*.py

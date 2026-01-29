@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  braexp-dashboard:
+    build: .
+    container_name: braexp-dashboard
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+    volumes:
+      # Monta datasets para persistência (opcional)
+      - ./datasets:/app/datasets:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

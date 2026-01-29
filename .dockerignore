@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# CSV descomprimidos (ZIPs serão incluídos)
+datasets/*.csv
+
+# Arquivos temporários
+NCM_SH.csv
+ncms_unicos.txt
+
+# Scripts de desenvolvimento
+scripts/extrair_ncms.py
+scripts/gerar_dicionario_ncm.py
+scripts/gerar_ncm_sh6.py
+scripts/test_server.py
+scripts/data/
+
+# README e documentação (incluir na imagem)
+!README.md

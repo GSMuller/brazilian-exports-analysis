@@ -1,0 +1,59 @@
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+
+# Database
+*.db
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Data files
+data/*.csv
+data/*.xlsx
+data/*.json
+
+# Datasets - ignorar CSVs descomprimidos, manter ZIPs
+datasets/*.csv
+datasets/*.xlsx
+
+# Scripts temporários
+scripts/data/*.csv
+scripts/data/*.txt
+
+# Arquivos temporários de processamento
+NCM_SH.csv
+ncms_unicos.txt
+
+# Cache
+.cache/
+.pytest_cache/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
